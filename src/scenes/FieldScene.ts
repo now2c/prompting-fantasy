@@ -35,6 +35,8 @@ export class FieldScene implements Scene {
 
   enter() {
     this.dialogue.active = false;
+    const el = document.getElementById('prompt-input') as HTMLInputElement | null;
+    if (el) el.blur();
   }
 
   private collide(x: number, y: number): boolean {
@@ -54,6 +56,7 @@ export class FieldScene implements Scene {
   }
 
   update(dt: number) {
+    const wasActive = this.dialogue.active;
     this.dialogue.update(dt);
     if (this.dialogue.active) return;
     if (this.transitionLock > 0) this.transitionLock -= dt;
@@ -84,7 +87,7 @@ export class FieldScene implements Scene {
       }
     }
 
-    if (input.anyPressed('Enter', ' ', 'z', 'Z') && this.transitionLock <= 0) {
+    if (input.anyPressed('Enter', ' ', 'z', 'Z') && this.transitionLock <= 0 && !wasActive) {
       const npc = this.findNpcNear(cx, cy);
       if (npc) this.dialogue.start(npc.name, npc.lines);
     }

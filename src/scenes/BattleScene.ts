@@ -79,11 +79,13 @@ export class BattleScene implements Scene {
   exit() {
     this.inputEl.removeEventListener('keydown', this.onKey);
     this.hideInput();
+    this.inputEl.blur();
   }
 
   private hideInput() {
     this.inputEl.style.display = 'none';
     this.inputEl.value = '';
+    this.inputEl.blur();
   }
 
   private showInput(unit: Combatant) {

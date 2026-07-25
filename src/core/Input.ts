@@ -2,10 +2,12 @@ export class Input {
   private down = new Set<string>();
   private pressed = new Set<string>();
   private textBuffer = '';
+  private promptEl: HTMLInputElement | null = null;
 
   constructor() {
+    this.promptEl = document.getElementById('prompt-input') as HTMLInputElement | null;
     window.addEventListener('keydown', (e) => {
-      if (this.isTextTarget(e.target)) return;
+      if (this.isPromptActive(e.target)) return;
       const code = e.key;
       if (
         [
@@ -28,8 +30,12 @@ export class Input {
     window.addEventListener('blur', () => this.down.clear());
   }
 
-  private isTextTarget(t: any): boolean {
-    return t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA');
+  private isPromptActive(t: any): boolean {
+    return (
+      !!this.promptEl &&
+      t === this.promptEl &&
+      this.promptEl.style.display !== 'none'
+    );
   }
 
   isDown(code: string): boolean {

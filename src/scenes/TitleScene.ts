@@ -18,7 +18,10 @@ export class TitleScene implements Scene {
 
   enter() {
     const el = document.getElementById('prompt-input') as HTMLInputElement;
-    if (el) el.style.display = 'none';
+    if (el) {
+      el.style.display = 'none';
+      el.blur();
+    }
   }
 
   update(dt: number) {
