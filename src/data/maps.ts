@@ -57,7 +57,7 @@ const town: MapDef = {
 
 const route: MapDef = {
   id: 'route',
-  spawn: { x: 1, y: 12 },
+  spawn: { x: 3, y: 12 },
   tiles: [
     '####################',
     '#TTTTT,,....,,TTTTT#',

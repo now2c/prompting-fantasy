@@ -1,7 +1,7 @@
 import { Scene, SceneManager } from '../core/SceneManager';
 import { Renderer } from '../core/Renderer';
 import { input } from '../core/Input';
-import { CONFIG, MapDef } from '../core/config';
+import { CONFIG, MapDef, NpcDef } from '../core/config';
 import { TILES, SPRITES, humanoid } from '../core/Assets';
 import { MAPS, tileAt, isSolid } from '../data/maps';
 import { DialogueBox } from '../ui/DialogueOverlay';
@@ -20,7 +20,7 @@ export class FieldScene implements Scene {
   private facing = { x: 0, y: 1 };
   private dialogue = new DialogueBox();
   private npcSprites = new Map<string, HTMLCanvasElement>();
-  private transitionLock = 0;
+  transitionLock = 0;
 
   constructor(scenes: SceneManager) {
     this.scenes = scenes;
@@ -38,16 +38,17 @@ export class FieldScene implements Scene {
   }
 
   private collide(x: number, y: number): boolean {
-    const pts = [
-      [x + 2, y + 2],
-      [x + 10, y + 2],
-      [x + 2, y + 10],
-      [x + 10, y + 10]
-    ];
-    for (const [cx, cy] of pts) {
-      const tx = Math.floor(cx / CONFIG.tile);
-      const ty = Math.floor(cy / CONFIG.tile);
-      if (isSolid(this.map, tx, ty)) return true;
+    const tx0 = Math.floor((x + 2) / CONFIG.tile);
+    const tx1 = Math.floor((x + 10) / CONFIG.tile);
+    const ty0 = Math.floor((y + 2) / CONFIG.tile);
+    const ty1 = Math.floor((y + 10) / CONFIG.tile);
+    for (let ty = ty0; ty <= ty1; ty++) {
+      for (let tx = tx0; tx <= tx1; tx++) {
+        if (isSolid(this.map, tx, ty)) return true;
+      }
+    }
+    for (const n of this.map.npcs) {
+      if (tx0 <= n.x && n.x <= tx1 && ty0 <= n.y && n.y <= ty1) return true;
     }
     return false;
   }
@@ -84,19 +85,33 @@ export class FieldScene implements Scene {
     }
 
     if (input.anyPressed('Enter', ' ', 'z', 'Z') && this.transitionLock <= 0) {
-      const fx = cx + this.facing.x;
-      const fy = cy + this.facing.y;
-      const npc = this.map.npcs.find((n) => n.x === fx && n.y === fy);
+      const npc = this.findNpcNear(cx, cy);
       if (npc) this.dialogue.start(npc.name, npc.lines);
     }
+  }
+
+  private findNpcNear(cx: number, cy: number): NpcDef | undefined {
+    const candidates = [
+      { x: cx + this.facing.x, y: cy + this.facing.y },
+      { x: cx + 1, y: cy },
+      { x: cx - 1, y: cy },
+      { x: cx, y: cy + 1 },
+      { x: cx, y: cy - 1 }
+    ];
+    for (const c of candidates) {
+      const npc = this.map.npcs.find((n) => n.x === c.x && n.y === c.y);
+      if (npc) return npc;
+    }
+    return undefined;
   }
 
   private gotoOtherMap() {
     const next = this.map.id === 'town' ? 'route' : 'town';
     GameState.mapId = next;
     GameState.playerTile = { ...MAPS[next].spawn };
-    this.transitionLock = 0.4;
-    this.scenes.set(new FieldScene(this.scenes));
+    const newScene = new FieldScene(this.scenes);
+    newScene.transitionLock = 0.5;
+    this.scenes.set(newScene);
   }
 
   private startBattle(tx: number, ty: number, key: string) {
