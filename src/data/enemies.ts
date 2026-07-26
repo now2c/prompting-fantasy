@@ -1,4 +1,4 @@
-import { Combatant } from '../core/config';
+import { Combatant, Element } from '../core/config';
 import { slime, bat, boss, SPRITES } from '../core/Assets';
 
 export interface EnemyDef {
@@ -11,6 +11,8 @@ export interface EnemyDef {
   magic: number;
   defense: number;
   atbRate: number;
+  weaknesses: Element[];
+  resistances: Element[];
 }
 
 const ENEMY_DEFS: Record<string, EnemyDef> = {
@@ -23,7 +25,9 @@ const ENEMY_DEFS: Record<string, EnemyDef> = {
     attack: 14,
     magic: 2,
     defense: 4,
-    atbRate: 34
+    atbRate: 34,
+    weaknesses: ['fire'],
+    resistances: ['earth']
   },
   wraith: {
     id: 'wraith',
@@ -34,7 +38,9 @@ const ENEMY_DEFS: Record<string, EnemyDef> = {
     attack: 10,
     magic: 16,
     defense: 3,
-    atbRate: 40
+    atbRate: 40,
+    weaknesses: ['holy'],
+    resistances: ['ice']
   },
   sorcerer: {
     id: 'sorcerer',
@@ -45,7 +51,9 @@ const ENEMY_DEFS: Record<string, EnemyDef> = {
     attack: 16,
     magic: 26,
     defense: 8,
-    atbRate: 30
+    atbRate: 30,
+    weaknesses: ['lightning'],
+    resistances: ['fire', 'ice']
   }
 };
 
@@ -73,6 +81,10 @@ export function makeEnemy(id: string): Combatant {
     defense: d.defense,
     guarding: false,
     guardTurns: 0,
+    atkUpTurns: 0,
+    defDownTurns: 0,
+    weaknesses: d.weaknesses,
+    resistances: d.resistances,
     spriteKey: d.sprite,
     tint: d.tint,
     alive: true

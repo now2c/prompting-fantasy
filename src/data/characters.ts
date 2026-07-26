@@ -82,6 +82,10 @@ export function makeParty(): Combatant[] {
     defense: c.defense,
     guarding: false,
     guardTurns: 0,
+    atkUpTurns: 0,
+    defDownTurns: 0,
+    weaknesses: [],
+    resistances: [],
     spriteKey: c.id,
     tint: c.tint,
     alive: true

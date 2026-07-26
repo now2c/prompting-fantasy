@@ -26,7 +26,7 @@ const ENEMY_POS = [
   { x: 84, y: 62 }
 ];
 
-type State = 'intro' | 'battle' | 'win' | 'lose';
+type State = 'intro' | 'battle' | 'win' | 'lose' | 'flee';
 
 export class BattleScene implements Scene {
   private scenes: SceneManager;
@@ -153,15 +153,40 @@ export class BattleScene implements Scene {
   }
 
   private resolveActor(spell: Spell, actor: Combatant) {
+    // flee handling (before applySpell)
+    if (spell.element === 'flee') {
+      const success = Math.random() < (this.isBoss ? 0.2 : 0.6);
+      if (success) {
+        this.state = 'flee';
+        this.endT = 0;
+        audio.sfx('confirm');
+        this.pushLog('Escaped!');
+      } else {
+        this.pushLog("Couldn't escape!");
+        actor.atb = 0;
+      }
+      return;
+    }
+
     const casterPos = this.positions.get(actor.id)!;
     this.effects.castFlash(casterPos.x, casterPos.y);
 
     const res = applySpell(spell, actor, this.party, this.enemies);
+
+    // MP fail
+    if (res.mpFail) {
+      this.pushLog(res.log);
+      actor.atb = 0;
+      return;
+    }
+
     this.pushLog(res.log + (res.flavor ? `  ${res.flavor}` : ''));
 
     const isHeal = spell.element === 'heal';
     const isGuard = spell.element === 'guard';
-    audio.sfx(isHeal ? 'heal' : isGuard ? 'confirm' : 'cast');
+    const isBuff = spell.element === 'focus';
+    const isDebuff = spell.element === 'weaken';
+    audio.sfx(isHeal ? 'heal' : isGuard || isBuff ? 'confirm' : isDebuff ? 'cast' : 'cast');
 
     for (const h of res.hits) {
       const pos = this.positions.get(h.target.id)!;
@@ -169,24 +194,36 @@ export class BattleScene implements Scene {
       const color = h.heal ? '#7CFC7C' : '#ff7b7b';
       this.pops.add(pos.x + 4, pos.y - 4, (h.heal ? '+' : '-') + h.amount, color);
       this.hitFlash.set(h.target.id, 0.15);
-      if (!h.heal && !isGuard) audio.sfx('hit');
+      if (h.modifier === 'weak') this.pops.add(pos.x + 4, pos.y - 16, 'WEAK!', '#ffd86b');
+      if (h.modifier === 'resist') this.pops.add(pos.x + 4, pos.y - 16, 'RESIST', '#9aa0b8');
+      if (!h.heal && !isGuard && !isBuff && !isDebuff) audio.sfx('hit');
       if (h.dead) this.death.set(h.target.id, 1.0);
     }
-    if (!isHeal && !isGuard && res.hits.length > 0) {
+    if (!isHeal && !isGuard && !isBuff && !isDebuff && res.hits.length > 0) {
       this.shakeT = Math.max(this.shakeT, 0.2 + spell.power * 0.06);
     }
+
+    // buff decay
     if (actor.guardTurns > 0) {
       actor.guardTurns--;
       if (actor.guardTurns <= 0) actor.guarding = false;
     }
+    if (actor.atkUpTurns > 0) actor.atkUpTurns--;
+    if (actor.defDownTurns > 0) actor.defDownTurns--;
+
     actor.atb = 0;
     this.checkEnd();
   }
 
   private enemyAct(unit: Combatant) {
     let spell: Spell;
-    if (unit.hp < unit.maxHp * 0.3 && Math.random() < 0.35) {
+    const r = Math.random();
+    if (unit.hp < unit.maxHp * 0.3 && r < 0.3) {
       spell = { element: 'guard', target: 'self', power: 1 };
+    } else if (unit.atkUpTurns <= 0 && r < 0.15) {
+      spell = { element: 'focus', target: 'self', power: 1 };
+    } else if (r < 0.22) {
+      spell = { element: 'weaken', target: 'single-enemy', power: 1 };
     } else {
       const elems: Spell['element'][] = ['fire', 'ice', 'lightning', 'slash'];
       const element = elems[Math.floor(Math.random() * elems.length)];
@@ -240,12 +277,17 @@ export class BattleScene implements Scene {
       if (this.introT <= 0) this.state = 'battle';
       return;
     }
-    if (this.state === 'win' || this.state === 'lose') {
+    if (this.state === 'win' || this.state === 'lose' || this.state === 'flee') {
       this.endT += dt;
       if (this.endT > 0.6 && input.anyPressed('Enter', ' ', 'z', 'Z')) {
         if (this.state === 'win') {
+          audio.sfx('confirm');
+          this.scenes.set(new FieldScene(this.scenes));
+        } else if (this.state === 'flee') {
+          audio.sfx('confirm');
           this.scenes.set(new FieldScene(this.scenes));
         } else {
+          audio.sfx('confirm');
           GameState.reset();
           import('./TitleScene').then((m) => this.scenes.set(new m.TitleScene(this.scenes)));
         }
@@ -414,6 +456,13 @@ export class BattleScene implements Scene {
       r.strokeRect(60, 60, CONFIG.baseW - 120, 100, '#ff6b6b', 2);
       r.heading('GAME OVER', 74, 76, '#ff6b6b', 12);
       r.text('The darkness prevails...', 82, 100, '#f4e7c0', 8);
+      r.text('Press Enter', 100, 138, '#9aa0b8', 8);
+    }
+    if (this.state === 'flee') {
+      r.rect(60, 60, CONFIG.baseW - 120, 100, '#0c0a16');
+      r.strokeRect(60, 60, CONFIG.baseW - 120, 100, '#cfe8ff', 2);
+      r.heading('ESCAPED!', 80, 76, '#cfe8ff', 12);
+      r.text('The party retreats safely.', 78, 100, '#f4e7c0', 8);
       r.text('Press Enter', 100, 138, '#9aa0b8', 8);
     }
   }

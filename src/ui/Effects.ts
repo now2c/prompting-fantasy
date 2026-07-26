@@ -78,6 +78,16 @@ export class Effects {
       case 'guard':
         this.bolt(cx, cy, 0.4, '#9fe0ff', 'ring', 16);
         break;
+      case 'focus':
+        this.bolt(cx, cy, 0.35, '#ffd86b', 'ring', 14);
+        for (let i = 0; i < 8; i++)
+          this.part(cx + (Math.random() * 10 - 5), cy + 6, Math.random() * 10 - 5, -20 - Math.random() * 20, 0.5, '#ffd86b', 2, -8);
+        break;
+      case 'weaken':
+        this.bolt(cx, cy, 0.35, '#b03ad2', 'ring', 14);
+        for (let i = 0; i < 8; i++)
+          this.part(cx + (Math.random() * 12 - 6), cy + 4, Math.random() * 14 - 7, 10 + Math.random() * 16, 0.5, '#b03ad2', 2, 6);
+        break;
     }
   }
 

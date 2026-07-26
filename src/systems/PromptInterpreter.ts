@@ -2,12 +2,13 @@ import { Combatant, Spell } from '../core/config';
 import { interpretOffline, isValidSpell } from '../data/promptKeywords';
 
 function buildState(party: Combatant[], enemies: Combatant[]): string {
-  const f = (c: Combatant) => `${c.name} (HP ${Math.max(0, c.hp)}/${c.maxHp})`;
-  const ps = party.filter((c) => c.alive).map(f).join(', ') || 'none';
-  const es = enemies
-    .filter((c) => c.alive)
-    .map((c) => `${c.name} (HP ${Math.max(0, c.hp)}/${c.maxHp})`)
-    .join(', ') || 'none';
+  const f = (c: Combatant) => {
+    const weak = c.weaknesses.length ? ` weak:${c.weaknesses.join(',')}` : '';
+    const resist = c.resistances.length ? ` resist:${c.resistances.join(',')}` : '';
+    return `${c.name} (HP ${Math.max(0, c.hp)}/${c.maxHp} MP ${c.mp}/${c.maxMp}${weak}${resist})`;
+  };
+  const ps = party.filter((c) => c.alive).map((c) => `${c.name} (HP ${Math.max(0, c.hp)}/${c.maxHp} MP ${c.mp}/${c.maxMp})`).join(', ') || 'none';
+  const es = enemies.filter((c) => c.alive).map(f).join(', ') || 'none';
   return `Party: ${ps}. Enemies: ${es}.`;
 }
 

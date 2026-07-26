@@ -13,7 +13,10 @@ export type Element =
   | 'holy'
   | 'heal'
   | 'slash'
-  | 'guard';
+  | 'guard'
+  | 'focus'
+  | 'weaken'
+  | 'flee';
 
 export type Target = 'all-enemies' | 'single-enemy' | 'all-allies' | 'single-ally' | 'self';
 
@@ -41,6 +44,10 @@ export interface Combatant {
   defense: number;
   guarding: boolean;
   guardTurns: number;
+  atkUpTurns: number;
+  defDownTurns: number;
+  weaknesses: Element[];
+  resistances: Element[];
   spriteKey: string;
   tint: string;
   alive: boolean;

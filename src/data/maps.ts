@@ -41,6 +41,8 @@ const town: MapDef = {
       tint: '#c8a040',
       lines: [
         'The Dark Sorcerer lurks on the road.',
+        'Fire burns goblins; holy smites the undead.',
+        'Lightning pierces the sorcerer\u0027s shield.',
         'Guard (防禦) when foes look mighty,',
         'and let Soren mend our wounds.'
       ]

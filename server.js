@@ -28,14 +28,18 @@ const GATEWAY = 'https://ai-gateway.vercel.sh/v1/chat/completions';
 const SYSTEM = `You are the battle interpreter for "Prompting Fantasy", a Final-Fantasy-style RPG.
 The player types a natural-language instruction to make a hero act in combat.
 Respond with ONLY a single JSON object (no markdown fencing, no commentary) of exactly this shape:
-{"element":"fire|ice|lightning|earth|holy|heal|slash|guard","target":"all-enemies|single-enemy|all-allies|single-ally|self","power":1,"flavor":"short phrase"}
+{"element":"fire|ice|lightning|earth|holy|heal|slash|guard|focus|weaken|flee","target":"all-enemies|single-enemy|all-allies|single-ally|self","power":1,"flavor":"short phrase"}
 Rules:
-- element fire/ice/lightning/earth/holy are offensive (target enemies); holy is strong vs undead.
-- heal restores HP and must target an ally or self.
-- slash is a physical melee strike (target enemies).
-- guard raises defense and targets self or allies.
-- target: all-enemies/single-enemy for offense; all-allies/single-ally/self for heal or guard.
-- power: 1 (weak) to 3 (strong). Infer from wording ("lightly"=1, "massive"/"everything"=3).`;
+- fire/ice/lightning/earth/holy: offensive magic. Enemies may have weaknesses (shown in state). power*3 MP cost.
+- heal: restores HP, target ally or self. power*2 MP cost.
+- slash: physical melee strike, 0 MP cost.
+- guard: raises defense for 2 turns, self target, 0 MP cost.
+- focus: boosts own attack for 2 turns, self target, 2 MP cost.
+- weaken: reduces enemy defense for 2 turns, target enemies, 2 MP cost.
+- flee: attempt to escape battle, self target, 0 MP cost.
+- target: all-enemies/single-enemy for offense/weaken; all-allies/single-ally/self for heal/guard/focus.
+- power: 1 (weak) to 3 (strong). Infer from wording ("lightly"=1, "massive"/"everything"=3).
+- If the player's prompt is about running away or escaping, use element "flee".`;
 
 async function callGateway(prompt) {
   const token = process.env.AI_GATEWAY_TOKEN;
