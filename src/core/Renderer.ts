@@ -10,11 +10,15 @@ export class Renderer {
     this.canvas = canvas;
     canvas.width = CONFIG.baseW;
     canvas.height = CONFIG.baseH;
-    canvas.style.width = CONFIG.baseW * CONFIG.scale + 'px';
-    canvas.style.height = CONFIG.baseH * CONFIG.scale + 'px';
     const ctx = canvas.getContext('2d')!;
     ctx.imageSmoothingEnabled = false;
     this.ctx = ctx;
+    this.setDisplayScale(CONFIG.scale);
+  }
+
+  setDisplayScale(s: number) {
+    this.canvas.style.width = CONFIG.baseW * s + 'px';
+    this.canvas.style.height = CONFIG.baseH * s + 'px';
   }
 
   clear(color = '#000') {
@@ -65,9 +69,32 @@ export class Renderer {
     this.ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
   }
 
-  text(str: string, x: number, y: number, color = '#f4e7c0', size = 8) {
+  setAlpha(a: number) {
+    this.ctx.globalAlpha = Math.max(0, Math.min(1, a));
+  }
+
+  clearAlpha() {
+    this.ctx.globalAlpha = 1;
+  }
+
+  text(str: string, x: number, y: number, color = '#f4e7c0', size = 8, outline = false) {
+    if (outline) {
+      this.ctx.font = `${size}px monospace`;
+      this.ctx.textBaseline = 'top';
+      this.ctx.fillStyle = 'rgba(0,0,0,0.8)';
+      this.ctx.fillText(str, x + 1, y + 1);
+    }
     this.ctx.font = `${size}px monospace`;
     this.ctx.textBaseline = 'top';
+    this.ctx.fillStyle = color;
+    this.ctx.fillText(str, x, y);
+  }
+
+  heading(str: string, x: number, y: number, color = '#ffd86b', size = 16) {
+    this.ctx.font = `${size}px "Press Start 2P", monospace`;
+    this.ctx.textBaseline = 'top';
+    this.ctx.fillStyle = 'rgba(0,0,0,0.85)';
+    this.ctx.fillText(str, x + 2, y + 2);
     this.ctx.fillStyle = color;
     this.ctx.fillText(str, x, y);
   }

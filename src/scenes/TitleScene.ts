@@ -6,6 +6,10 @@ import { GameState } from '../gameState';
 import { SaveSystem } from '../systems/SaveSystem';
 import { FieldScene } from './FieldScene';
 import { SceneManager } from '../core/SceneManager';
+import { audio } from '../systems/Audio';
+
+const STARS: [number, number][] = [];
+for (let i = 0; i < 40; i++) STARS.push([Math.random() * 256, Math.random() * 224]);
 
 export class TitleScene implements Scene {
   private scenes: SceneManager;
@@ -28,10 +32,17 @@ export class TitleScene implements Scene {
     this.t += dt;
     const hasSave = SaveSystem.has();
     if (hasSave) {
-      if (input.wasPressed('ArrowUp') || input.wasPressed('ArrowDown')) this.sel = this.sel ? 0 : 1;
-      if (input.wasPressed('c') || input.wasPressed('C')) this.sel = 1;
+      if (input.wasPressed('ArrowUp') || input.wasPressed('ArrowDown')) {
+        this.sel = this.sel ? 0 : 1;
+        audio.sfx('select');
+      }
+      if (input.wasPressed('c') || input.wasPressed('C')) {
+        this.sel = 1;
+        audio.sfx('select');
+      }
     }
     if (input.anyPressed('Enter', ' ', 'z', 'Z')) {
+      audio.sfx('confirm');
       if (hasSave && this.sel === 1) this.continueGame();
       else this.newGame();
     }
@@ -59,22 +70,45 @@ export class TitleScene implements Scene {
 
   draw(r: Renderer) {
     r.clear('#05060a');
-    r.rect(0, 30, CONFIG.baseW, 60, '#0c0a16');
-    r.text('PROMPTING', CONFIG.baseW / 2 - 64, 44, '#ffd86b', 18);
-    r.text('FANTASY', CONFIG.baseW / 2 - 56, 66, '#ffd86b', 18);
-    r.text('— command with words —', CONFIG.baseW / 2 - 60, 92, '#cfe8ff', 8);
+
+    // stars
+    for (const [sx, sy] of STARS) {
+      const twinkle = Math.sin(this.t * 2 + sx * 0.1 + sy * 0.13) > 0.3;
+      if (twinkle) r.rect(sx, sy, 1, 1, '#cfe8ff');
+    }
+
+    // ground silhouette
+    r.rect(0, 160, CONFIG.baseW, 64, '#0a0a14');
+    r.rect(0, 158, CONFIG.baseW, 2, '#1a1a2a');
+    // castle silhouette
+    r.rect(80, 120, 12, 38, '#0e0e1a');
+    r.rect(92, 128, 20, 30, '#0e0e1a');
+    r.rect(112, 120, 12, 38, '#0e0e1a');
+    r.rect(76, 116, 8, 6, '#0e0e1a');
+    r.rect(116, 116, 8, 6, '#0e0e1a');
+    // small silhouettes (heroes)
+    r.rect(160, 146, 8, 12, '#1a1a2a');
+    r.rect(170, 144, 8, 14, '#1a1a2a');
+    r.rect(180, 147, 8, 11, '#1a1a2a');
+
+    // title
+    r.heading('PROMPTING', CONFIG.baseW / 2 - 66, 30, '#ffd86b', 14);
+    r.heading('FANTASY', CONFIG.baseW / 2 - 56, 50, '#ffd86b', 14);
+    r.text('— command with words —', CONFIG.baseW / 2 - 60, 72, '#cfe8ff', 8);
 
     const hasSave = SaveSystem.has();
     const items = hasSave ? ['New Game', 'Continue'] : ['New Game'];
     items.forEach((label, i) => {
-      const y = 130 + i * 16;
-      const color = i === this.sel && hasSave ? '#ffe9a8' : '#9aa0b8';
-      r.text((i === this.sel && hasSave ? '▶ ' : '  ') + label, CONFIG.baseW / 2 - 44, y, color, 9);
+      const y = 100 + i * 16;
+      const selected = i === this.sel && hasSave;
+      const color = selected ? '#ffe9a8' : '#9aa0b8';
+      r.text((selected ? '▶ ' : '  ') + label, CONFIG.baseW / 2 - 44, y, color, 9);
     });
 
     if (Math.floor(this.t * 2) % 2 === 0) {
-      r.text('Press Enter', CONFIG.baseW / 2 - 32, 178, '#f4e7c0', 8);
+      r.text('Press Enter', CONFIG.baseW / 2 - 32, 140, '#f4e7c0', 8);
     }
-    r.text('Type prompts in battle to cast spells', CONFIG.baseW / 2 - 92, 200, '#6a7090', 7);
+    r.text('Type prompts in battle to cast spells', CONFIG.baseW / 2 - 92, 186, '#4a5070', 7);
+    r.text('M: mute', CONFIG.baseW - 36, 214, '#4a5070', 7);
   }
 }

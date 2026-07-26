@@ -4,17 +4,30 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Prompting Fantasy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
     <style>
-      html, body {
+      html,
+      body {
         margin: 0;
         height: 100%;
         background: #05060a;
         overflow: hidden;
         font-family: monospace;
       }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
       #stage {
         position: relative;
         display: inline-block;
+        box-shadow: 0 0 0 3px #000, 0 0 24px rgba(0, 0, 0, 0.8);
       }
       #game {
         display: block;
@@ -29,9 +42,9 @@
         border: 2px solid #f4e7c0;
         background: #1a1726;
         color: #f4e7c0;
-        font-family: monospace;
+        font-family: "Press Start 2P", monospace;
         outline: none;
-        padding: 2px 6px;
+        padding: 4px 8px;
       }
     </style>
   </head>

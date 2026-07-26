@@ -49,9 +49,12 @@ const ENEMY_DEFS: Record<string, EnemyDef> = {
   }
 };
 
-SPRITES['goblin'] = slime('#5a8a3a');
-SPRITES['wraith'] = bat('#7a5ac8');
-SPRITES['sorcerer'] = boss('#b03ad2');
+SPRITES['goblin'] = slime('#5a8a3a', 0);
+SPRITES['goblin_w'] = slime('#5a8a3a', 1);
+SPRITES['wraith'] = bat('#7a5ac8', 0);
+SPRITES['wraith_w'] = bat('#7a5ac8', 1);
+SPRITES['sorcerer'] = boss('#b03ad2', 0);
+SPRITES['sorcerer_w'] = boss('#b03ad2', 1);
 
 export function makeEnemy(id: string): Combatant {
   const d = ENEMY_DEFS[id];

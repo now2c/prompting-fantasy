@@ -9,6 +9,7 @@ import { GameState } from '../gameState';
 import { SaveSystem } from '../systems/SaveSystem';
 import { BattleScene } from './BattleScene';
 import { makeEncounter } from '../data/enemies';
+import { audio } from '../systems/Audio';
 
 const SPEED = 52;
 
@@ -21,6 +22,10 @@ export class FieldScene implements Scene {
   private dialogue = new DialogueBox();
   private npcSprites = new Map<string, HTMLCanvasElement>();
   transitionLock = 0;
+  private transitioning = false;
+  private walkT = 0;
+  private stepThrottle = 0;
+  private time = 0;
 
   constructor(scenes: SceneManager) {
     this.scenes = scenes;
@@ -35,6 +40,7 @@ export class FieldScene implements Scene {
 
   enter() {
     this.dialogue.active = false;
+    this.transitioning = false;
     const el = document.getElementById('prompt-input') as HTMLInputElement | null;
     if (el) el.blur();
   }
@@ -56,32 +62,49 @@ export class FieldScene implements Scene {
   }
 
   update(dt: number) {
+    this.time += dt;
     const wasActive = this.dialogue.active;
     this.dialogue.update(dt);
     if (this.dialogue.active) return;
+    if (wasActive && !this.dialogue.active) audio.sfx('confirm');
     if (this.transitionLock > 0) this.transitionLock -= dt;
 
     const d = input.dir();
-    if (d.x !== 0 || d.y !== 0) {
+    const moving = d.x !== 0 || d.y !== 0;
+    if (moving) {
       if (d.x !== 0) this.facing = { x: Math.sign(d.x), y: 0 };
       else this.facing = { x: 0, y: Math.sign(d.y) };
       const nx = this.px + d.x * SPEED * dt;
       const ny = this.py + d.y * SPEED * dt;
       if (!this.collide(nx, this.py)) this.px = nx;
       if (!this.collide(this.px, ny)) this.py = ny;
+      this.walkT += dt;
+      this.stepThrottle -= dt;
+      if (this.stepThrottle <= 0) {
+        audio.sfx('step');
+        this.stepThrottle = 0.25;
+      }
+    } else {
+      this.walkT = 0;
     }
+
+    if (this.transitioning) return;
 
     const cx = Math.floor((this.px + 6) / CONFIG.tile);
     const cy = Math.floor((this.py + 6) / CONFIG.tile);
     const t = tileAt(this.map, cx, cy);
 
     if (t === 'O' && this.transitionLock <= 0) {
+      this.transitioning = true;
+      audio.sfx('transition');
       this.gotoOtherMap();
       return;
     }
     if (t === 'B' && this.transitionLock <= 0) {
       const key = `${this.map.id}@${cx}@${cy}`;
       if (!GameState.consumedBattles.has(key)) {
+        this.transitioning = true;
+        audio.sfx('battle');
         this.startBattle(cx, cy, key);
         return;
       }
@@ -89,7 +112,10 @@ export class FieldScene implements Scene {
 
     if (input.anyPressed('Enter', ' ', 'z', 'Z') && this.transitionLock <= 0 && !wasActive) {
       const npc = this.findNpcNear(cx, cy);
-      if (npc) this.dialogue.start(npc.name, npc.lines);
+      if (npc) {
+        this.dialogue.start(npc.name, npc.lines);
+        audio.sfx('confirm');
+      }
     }
   }
 
@@ -143,12 +169,27 @@ export class FieldScene implements Scene {
       }
     }
 
+    // NPC sprites + "!" indicator
+    const pcx = (this.px + 6) / CONFIG.tile;
+    const pcy = (this.py + 6) / CONFIG.tile;
     for (const n of this.map.npcs) {
       const s = this.npcSprites.get(n.name)!;
-      r.drawSprite(s, n.x * CONFIG.tile, n.y * CONFIG.tile);
+      const bob = Math.sin(this.time * 1.2 + n.x * 0.5 + n.y * 0.7) * 0.5;
+      r.drawSprite(s, n.x * CONFIG.tile, n.y * CONFIG.tile + bob);
+      const dist = Math.abs(n.x - Math.floor(pcx)) + Math.abs(n.y - Math.floor(pcy));
+      if (dist <= 2) {
+        const bright = dist <= 1 ? '#ffd86b' : '#9aa0b8';
+        const ibob = Math.abs(Math.sin(this.time * 3)) * 2;
+        r.text('!', n.x * CONFIG.tile + 6, n.y * CONFIG.tile - 10 - ibob + bob, bright, 9);
+      }
     }
 
-    r.drawSprite(SPRITES['vance'], this.px, this.py);
+    // Player sprite (walk frame)
+    const isWalking = this.walkT > 0;
+    const frame = isWalking && Math.floor(this.walkT / 0.18) % 2 === 1;
+    const spr = SPRITES[frame ? 'vance_w' : 'vance'];
+    const pbob = isWalking ? Math.abs(Math.sin(this.walkT * 8)) * 1.5 : Math.sin(this.time * 1.5) * 0.5;
+    r.drawSprite(spr, this.px, this.py + pbob);
 
     // top hint
     r.rect(0, 0, CONFIG.baseW, 12, 'rgba(0,0,0,0.5)');

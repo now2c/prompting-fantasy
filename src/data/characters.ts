@@ -1,10 +1,11 @@
 import { Combatant } from '../core/config';
-import { humanoid, SPRITES } from '../core/Assets';
+import { makeHero, SPRITES } from '../core/Assets';
 
 export interface CharDef {
   id: string;
   name: string;
   tint: string;
+  kind: 'knight' | 'mage' | 'cleric';
   maxHp: number;
   maxMp: number;
   attack: number;
@@ -20,6 +21,7 @@ export const CHARACTERS: CharDef[] = [
     id: 'vance',
     name: 'Vance',
     tint: '#c8443a',
+    kind: 'knight',
     maxHp: 120,
     maxMp: 20,
     attack: 22,
@@ -33,6 +35,7 @@ export const CHARACTERS: CharDef[] = [
     id: 'lyra',
     name: 'Lyra',
     tint: '#3a6ec8',
+    kind: 'mage',
     maxHp: 80,
     maxMp: 60,
     attack: 8,
@@ -46,6 +49,7 @@ export const CHARACTERS: CharDef[] = [
     id: 'soren',
     name: 'Soren',
     tint: '#e0c040',
+    kind: 'cleric',
     maxHp: 95,
     maxMp: 50,
     attack: 10,
@@ -57,9 +61,10 @@ export const CHARACTERS: CharDef[] = [
   }
 ];
 
-SPRITES['vance'] = humanoid('#c8443a');
-SPRITES['lyra'] = humanoid('#3a6ec8');
-SPRITES['soren'] = humanoid('#e0c040');
+for (const c of CHARACTERS) {
+  SPRITES[c.id] = makeHero(c.tint, c.kind, 0);
+  SPRITES[c.id + '_w'] = makeHero(c.tint, c.kind, 1);
+}
 
 export function makeParty(): Combatant[] {
   return CHARACTERS.map((c) => ({
