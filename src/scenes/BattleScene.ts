@@ -14,14 +14,14 @@ import { SceneManager } from '../core/SceneManager';
 import { EXAMPLE_PROMPTS } from '../data/promptKeywords';
 
 const PARTY_POS = [
-  { x: 150, y: 158 },
-  { x: 186, y: 158 },
-  { x: 222, y: 158 }
+  { x: 150, y: 150 },
+  { x: 186, y: 150 },
+  { x: 222, y: 150 }
 ];
 const ENEMY_POS = [
-  { x: 55, y: 48 },
-  { x: 38, y: 92 },
-  { x: 80, y: 92 }
+  { x: 60, y: 30 },
+  { x: 36, y: 62 },
+  { x: 84, y: 62 }
 ];
 
 type State = 'intro' | 'battle' | 'win' | 'lose';
@@ -35,7 +35,7 @@ export class BattleScene implements Scene {
   private positions = new Map<string, { x: number; y: number }>();
   private state: State = 'intro';
   private introT = 1.1;
-  private log = '';
+  private logs: string[] = [];
   private awaitingInput = false;
   private thinking = false;
   private activeUnit: Combatant | null = null;
@@ -72,9 +72,11 @@ export class BattleScene implements Scene {
   enter() {
     this.inputEl.addEventListener('keydown', this.onKey);
     this.hideInput();
-    this.log = this.isBoss
-      ? 'The Dark Sorcerer blocks the path!'
-      : 'A wild encounter begins!';
+    this.pushLog(
+      this.isBoss
+        ? 'The Dark Sorcerer blocks the path!'
+        : 'A wild encounter begins!'
+    );
   }
 
   exit() {
@@ -93,7 +95,7 @@ export class BattleScene implements Scene {
     this.example = EXAMPLE_PROMPTS[Math.floor(Math.random() * EXAMPLE_PROMPTS.length)];
     const scale = CONFIG.scale;
     const bx = 12;
-    const by = CONFIG.baseH - 34;
+    const by = 192;
     this.inputEl.style.display = 'block';
     this.inputEl.style.left = bx * scale + 'px';
     this.inputEl.style.top = by * scale + 'px';
@@ -109,7 +111,7 @@ export class BattleScene implements Scene {
     if (!v) return;
     this.hideInput();
     this.thinking = true;
-    this.log = `${this.activeUnit!.name} ponders the prompt...`;
+      this.pushLog(`${this.activeUnit!.name} ponders the prompt...`);
     const actor = this.activeUnit!;
     interpret(v, this.party, this.enemies).then((spell) => {
       this.resolveActor(spell, actor);
@@ -119,9 +121,14 @@ export class BattleScene implements Scene {
     });
   }
 
+  private pushLog(s: string) {
+    this.logs.push(s);
+    if (this.logs.length > 2) this.logs.shift();
+  }
+
   private resolveActor(spell: Spell, actor: Combatant) {
     const res = applySpell(spell, actor, this.party, this.enemies);
-    this.log = res.log + (res.flavor ? `  ${res.flavor}` : '');
+    this.pushLog(res.log + (res.flavor ? `  ${res.flavor}` : ''));
     for (const h of res.hits) {
       const pos = this.positions.get(h.target.id)!;
       const color = h.heal ? '#7CFC7C' : '#ff7b7b';
@@ -223,16 +230,20 @@ export class BattleScene implements Scene {
       }
       r.drawSprite(spr, pos.x, pos.y);
       nameAndBars(r, c, pos.x - 4, pos.y + 18);
-      drawBar(r, pos.x - 4, pos.y + 30, 40, 2, c.atb / 100, '#e0c040', '#2a2230');
+      drawBar(r, pos.x - 4, pos.y + 38, 40, 2, c.atb / 100, '#e0c040', '#2a2230');
     }
 
     this.pops.draw(r);
 
     if (this.flashT > 0) r.flash('rgba(255,255,255,1)', this.flashT * 3);
 
-    // log line
-    r.rect(0, CONFIG.baseH - 54, CONFIG.baseW, 14, 'rgba(0,0,0,0.55)');
-    r.text(this.log.slice(0, 42), 6, CONFIG.baseH - 51, '#f4e7c0', 8);
+    // two-line action log (middle panel)
+    r.rect(4, 112, CONFIG.baseW - 8, 38, 'rgba(0,0,0,0.55)');
+    r.strokeRect(4, 112, CONFIG.baseW - 8, 38, '#3a3a52', 1);
+    const lines = this.logs.slice(-2);
+    for (let i = 0; i < lines.length; i++) {
+      r.text(lines[i].slice(0, 40), 10, 120 + i * 14, '#f4e7c0', 8);
+    }
 
     if (this.state === 'intro') {
       r.rect(0, CONFIG.baseH / 2 - 14, CONFIG.baseW, 28, 'rgba(0,0,0,0.7)');
@@ -246,7 +257,7 @@ export class BattleScene implements Scene {
     }
 
     if (this.awaitingInput && this.activeUnit) {
-      const by = CONFIG.baseH - 36;
+      const by = 192;
       r.rect(8, by, CONFIG.baseW - 16, 32, '#0c0a16');
       r.strokeRect(8, by, CONFIG.baseW - 16, 32, '#f4e7c0', 2);
       r.text(`▶ ${this.activeUnit.name}, type a PROMPT:`, 12, by + 4, '#ffe9a8', 8);
