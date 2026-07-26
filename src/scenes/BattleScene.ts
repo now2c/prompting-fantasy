@@ -95,7 +95,7 @@ export class BattleScene implements Scene {
     this.example = EXAMPLE_PROMPTS[Math.floor(Math.random() * EXAMPLE_PROMPTS.length)];
     const scale = CONFIG.scale;
     const bx = 12;
-    const by = 192;
+    const by = 203;
     this.inputEl.style.display = 'block';
     this.inputEl.style.left = bx * scale + 'px';
     this.inputEl.style.top = by * scale + 'px';
@@ -103,6 +103,7 @@ export class BattleScene implements Scene {
     this.inputEl.style.height = 18 * scale + 'px';
     this.inputEl.style.fontSize = 9 * scale + 'px';
     this.inputEl.value = '';
+    this.inputEl.placeholder = 'e.g. ' + this.example;
     setTimeout(() => this.inputEl.focus(), 0);
   }
 
@@ -257,11 +258,10 @@ export class BattleScene implements Scene {
     }
 
     if (this.awaitingInput && this.activeUnit) {
-      const by = 192;
-      r.rect(8, by, CONFIG.baseW - 16, 32, '#0c0a16');
-      r.strokeRect(8, by, CONFIG.baseW - 16, 32, '#f4e7c0', 2);
+      const by = 190;
+      r.rect(8, by, CONFIG.baseW - 16, 34, '#0c0a16');
+      r.strokeRect(8, by, CONFIG.baseW - 16, 34, '#f4e7c0', 2);
       r.text(`▶ ${this.activeUnit.name}, type a PROMPT:`, 12, by + 4, '#ffe9a8', 8);
-      r.text('e.g. ' + this.example, 12, by + 20, '#8fa0c8', 7);
       if (this.thinking) r.text('…', CONFIG.baseW - 20, by + 4, '#f4e7c0', 8);
     }
 
