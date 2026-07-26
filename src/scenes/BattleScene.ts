@@ -42,6 +42,7 @@ export class BattleScene implements Scene {
   private pops = new DamagePopups();
   private flashT = 0;
   private endT = 0;
+  private example = EXAMPLE_PROMPTS[0];
 
   private inputEl: HTMLInputElement;
   private onKey: (e: KeyboardEvent) => void;
@@ -89,6 +90,7 @@ export class BattleScene implements Scene {
   }
 
   private showInput(unit: Combatant) {
+    this.example = EXAMPLE_PROMPTS[Math.floor(Math.random() * EXAMPLE_PROMPTS.length)];
     const scale = CONFIG.scale;
     const bx = 12;
     const by = CONFIG.baseH - 34;
@@ -204,6 +206,7 @@ export class BattleScene implements Scene {
   }
 
   draw(r: Renderer) {
+    r.setCamera(0, 0);
     r.clear('#0a0a12');
     // backdrop
     r.rect(0, 0, CONFIG.baseW, 120, '#161a2e');
@@ -247,7 +250,7 @@ export class BattleScene implements Scene {
       r.rect(8, by, CONFIG.baseW - 16, 32, '#0c0a16');
       r.strokeRect(8, by, CONFIG.baseW - 16, 32, '#f4e7c0', 2);
       r.text(`▶ ${this.activeUnit.name}, type a PROMPT:`, 12, by + 4, '#ffe9a8', 8);
-      r.text('e.g. ' + EXAMPLE_PROMPTS[Math.floor(Math.random() * EXAMPLE_PROMPTS.length)], 12, by + 20, '#8fa0c8', 7);
+      r.text('e.g. ' + this.example, 12, by + 20, '#8fa0c8', 7);
       if (this.thinking) r.text('…', CONFIG.baseW - 20, by + 4, '#f4e7c0', 8);
     }
 
